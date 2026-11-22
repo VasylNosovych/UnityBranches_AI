@@ -6,6 +6,49 @@ const CONFIG = {
 };
 // ====================
 
+// ====== ENUMS ======
+const CATEGORIES = {
+  RELIGIOUS_INSTITUTION: "Храм",
+  BUSINESS: "Бізнес",
+  COMMUNITY: "Громада",
+  ESTABLISHMENT: "Установа"
+};
+
+const KNOWN_DONORS = {
+  // Бізнес
+  HLIANETS_CHARITY: 'Благодійна акція "5 грн. на ЗСУ" у магазині «Глянець»',
+  PLANETA_ROSLYN: '"Планета Рослин"',
+  DYMYDS_CHARITY: 'Магазин Димидів: акція',
+  PAVLIV_HALYNA_KALNA_SHOP: 'Магазин Галини Павлів у с.Кальна',
+
+  // Храм
+  CHURCH_CATHOLIC_VYTVYTSIA: 'УГКЦ Храм св. І.Богослова с.Витвиця',
+  CHURCH_CATHOLIC_ROZTOCHKY: 'УГКЦ Храм св. Василія Великого с.Розточки',
+  CHURCH_ORTHODOX_ROZTOCHKY: 'ПЦУ Храм Різдва Пресвятої Богородиці с.Розточки',
+  CHURCH_ORTHODOX_VYTVYTSIA: 'ПЦУ Храм св. А.Первозванного с.Витвиця',
+  CHURCH_CATHOLIC_STANKIVTSI: 'УГКЦ Храм св. Архистратига Михаїла с.Станківці',
+  CHURCH_CATHOLIC_KALNA: 'УГКЦ Храм св. Архистратига Михаїла с.Кальна',
+  CHURCH_ORTHODOX_KALNA: 'ПЦУ Храм св. Архистратига Михаїла с.Кальна',
+  CHURCH_ORTHODIX_SLOBODA: 'ПЦУ Храм св. Богоявлення с.Слобода-Болехівська',
+  CHURCH_CATHOLIC_MADRID: 'ГКЦ м.Мадрид, Іспанія',
+  CHURCH_CATHOLIC_GETAFE: 'ГКЦ м.Гетафе, Іспанія',
+
+  // Установа
+  LYCEUM_VYTVYTSIA: 'Витвицький ліцей',
+  LYCEUM_KALNA: 'Кальнянський ліцей ім. М. Дяка',
+  GYMNASIUM_ROZTOCHKY: 'Розточківська гімназія',
+  SCHOOL_STANKIVTSI: 'Станківецька початкова школа ім.Василя Дорошенка',
+  COUNCIL_VYTVYTSIA: 'Витвицька сільрада',
+  CULTURAL_CENTER_VYTVYTSIA: 'Витвицький БК',
+  CULTURAL_CENTER_SLOBODA: 'БК Слобода-Болехівська',
+
+  // Громада
+  HLIANETS_FUNDRASING: 'Збір на потреби ЗСУ в магазині «Глянець»',
+  BOYKO_MARKET_FUNDRASING: 'Збір на потреби ЗСУ у магазині «Boyko market»',
+  COMMUNITY_STANKIVTSI: 'Громада Станківців'
+};
+// ===================
+
 function processNewScreenshots() {
   const folderNew = DriveApp.getFolderById(CONFIG.FOLDER_NEW_ID);
   const folderProcessed = DriveApp.getFolderById(CONFIG.FOLDER_PROCESSED_ID);
@@ -91,39 +134,58 @@ function parseReceiptData(text) {
   const lines = text.split('\n');
   const fullText = text.toLowerCase();
 
-  // --- ПРАВИЛА ДЛЯ КОЛОНКИ "ВІД КОГО" ---
-  if (fullText.includes('благодійна акція "5 грн. на зсу" у магазині «глянець»') || fullText.includes('благодійна акція ”5 грн. на зсу”')) {
-    sender = 'Благодійна акція "5 грн. на ЗСУ" у магазині «Глянець»';
-  } else if (fullText.includes('зі збору у магазині «глянець»')) {
-    sender = 'Збір на потреби ЗСУ у магазині "Глянець"';
-  } else if (fullText.includes('храмі святого івана богослова') || fullText.includes('с. витвиця')) {
-    sender = 'Храм св. І.Богослова с.Витвиця';
-  } else if (fullText.includes('церкві пресвятої богородиці') || fullText.includes('с. розточки')) {
-    sender = 'Храм Різдва Пресвятої Богородиці с.Розточки';
-  } else if (fullText.includes('храмі святого андрія первозванного')) {
-    sender = 'Храм св. А.Первозванного с.Витвиця';
-  } else if (fullText.includes('храмі святого василія великого')) {
-    sender = 'УГКЦ Храм св. Василія Великого с.Розточки';
-  } else {
+  // --- ПРАВИЛА ДЛЯ КОЛОНОК "Від кого" і "Категорія" ---
+  if (fullText.includes('5 грн. на зсу')) {
+    sender = KNOWN_DONORS.HLIANETS_CHARITY;
+    category = CATEGORIES.BUSINESS;
+  }
+  else if (fullText.includes('зі збору у магазині «глянець»')) {
+    sender = KNOWN_DONORS.HLIANETS_FUNDRASING;
+    category = CATEGORIES.COMMUNITY;
+  }
+  else if (fullText.includes('святого івана богослова')) {
+    sender = KNOWN_DONORS.CHURCH_CATHOLIC_VYTVYTSIA;
+    category = CATEGORIES.RELIGIOUS_INSTITUTION;
+  }
+  else if (fullText.includes('святого василія великого')) {
+    sender = KNOWN_DONORS.CHURCH_CATHOLIC_ROZTOCHKY;
+    category = CATEGORIES.RELIGIOUS_INSTITUTION;
+  }
+  else if (fullText.includes('пресвятої богородиці')) {
+    sender = KNOWN_DONORS.CHURCH_ORTHODOX_ROZTOCHKY;
+    category = CATEGORIES.RELIGIOUS_INSTITUTION;
+  }
+  else if (fullText.includes('святого андрія первозванного')) {
+    sender = KNOWN_DONORS.CHURCH_ORTHODOX_VYTVYTSIA;
+    category = CATEGORIES.RELIGIOUS_INSTITUTION;
+  }
+  else if (fullText.includes('від витвицького ліцею')) {
+    sender = KNOWN_DONORS.LYCEUM_VYTVYTSIA;
+    category = CATEGORIES.ESTABLISHMENT;
+  }
+  else {
     // Якщо точного збігу немає, беремо перший рядок тексту як відправника (потребує ручної перевірки)
     sender = lines[0]; 
     needsReview = true;
   }
 
   // --- ПРАВИЛА ДЛЯ КОЛОНКИ "КАТЕГОРІЯ" ---
-  const sLower = sender.toLowerCase();
-  if (sLower.match(/(церква|храм|парафія|парафіяни)/)) {
-    category = "Храм";
+  if (category !== "") {
+    const sLower = sender.toLowerCase();
+    if (sLower.match(/(магазин|глянець|бойко маркет|boyko_market|silver|пленет|plenet|аптека|планета рослин|planeta_roslyn)/)) {
+      category = CATEGORIES.BUSINESS;
+    }
+    else if (sLower.match(/(храм|церква|парафія|парафіяни)/)) {
+      category = CATEGORIES.RELIGIOUS_INSTITUTION;
+    }
+    else if (sLower.match(/(ліцей|школа|бк|турнір|гімназія|сільрада)/)) {
+      category = CATEGORIES.ESTABLISHMENT;
+    }
+    else if (sLower.match(/(громада|від дітей|вертеп|коляда|щедрівка|вигодівські|волонтер|захід|ярмарок|аквагрим|збір)/)) {
+      category = CATEGORIES.COMMUNITY;
+    }
   }
-  else if (sLower.match(/(ліцей|школа|бк|турнір|гімназія|сільрада)/)) {
-    category = "Установа";
-  }
-  else if (sLower.match(/(магазин|глянець|бойко маркет|boyko_market|silver|пленет|plenet|аптека|планета рослин|planeta_roslyn)/)) {
-    category = "Бізнес";
-  }
-  else if (sLower.match(/(громада|від дітей|вертеп|коляда|щедрівка|вигодівські|волонтер|захід|ярмарок|аквагрим|збір)/)) {
-    category = "Громада";
-  }
+  
 
   // --- ПРАВИЛА ДЛЯ КОЛОНКИ "СУМА" ---
   // Шукаємо число, біля якого є "грн" або "uah", ігноруючи слово "залишок"
@@ -156,6 +218,9 @@ function parseReceiptData(text) {
   // --- ПРАВИЛА ДЛЯ КОЛОНКИ "КУДИ СКЕРОВАНО" ---
   if (fullText.includes('на матеріали для маскувальних сіт')) {
     target = 'На матеріали для маскувальних сіт';
+  }
+  else if (fullText.includes('залишок готівки')) {
+    target = 'В готівковий залишок на наступні потреби із фронту';
   }
 
   // Формуємо масив даних для нового рядка: 
